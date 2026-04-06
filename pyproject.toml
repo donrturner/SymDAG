@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "symdag"
+version = "0.1.0"
+description = "Unified SymDAG package with greedy and Bayesian structure-learning backends."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "dill",
+  "joblib",
+  "networkx",
+  "numpy",
+  "pandas",
+  "patsy",
+  "pgmpy",
+  "scikit-learn",
+  "scipy",
+]
+
+[project.optional-dependencies]
+bayes = [
+  "gadjid",
+  "pybnesian",
+  "pysips",
+]
+greedy = [
+  "psutil",
+  "rils-rols",
+  "sympy",
+]
+full = [
+  "gadjid",
+  "pybnesian",
+  "psutil",
+  "pysips",
+  "rils-rols",
+  "sympy",
+]
+
+[project.scripts]
+symdag = "symdag.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
