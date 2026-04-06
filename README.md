@@ -9,8 +9,6 @@ The package currently exposes two related methods:
 
 Both methods aim to estimate a directed acyclic graph together with readable symbolic mechanism estimates. SymDAG-Greedy embeds symbolic regression inside a score-based DAG search, while SymDAG-Bayes uses stochastic ordering updates and posterior-weighted local symbolic models to produce posterior edge-support summaries in addition to representative equations.
 
-This package implementation is based on the current SymDAG project code and is aligned with the manuscript in `D:\symdag_convert\symdag_plos_submission\symdag_plos.tex`, prepared for PLOS submission.
-
 ## What The Package Includes
 
 - a unified Python API for `greedy` and `bayes`
