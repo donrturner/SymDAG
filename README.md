@@ -11,8 +11,6 @@ In the current implementation, SymDAG:
 - fits local symbolic models with PySIPS and aggregates posterior edge support across retained samples
 - returns a thresholded DAG, posterior edge summaries, and representative symbolic equations
 
-The package also includes the simulated-data generators used in the project code, so users can reproduce quick examples on Gaussian-process, GP-interaction, spline, or symbolic-function data.
-
 ## What The Package Includes
 
 - one public fitting API, `run_symdag`
