@@ -1228,7 +1228,7 @@ def _build_graph_from_posterior(
     }
 
 
-def symdag_bayes_stochastic_v2(
+def symdag_stochastic(
     Y,
     n_iter=1000,
     random_state=None,
@@ -1636,7 +1636,7 @@ def make_output_path(gen_method, n, d, sigma, array_id):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run SymDAG Bayesian sampler experiment.")
+    parser = argparse.ArgumentParser(description="Run SymDAG sampler experiment.")
     parser.add_argument("--array_id", default=os.getenv("SLURM_ARRAY_TASK_ID", "0"))
     return parser.parse_args()
 
@@ -1662,7 +1662,7 @@ def main():
         seed=seed,
     )
 
-    result = symdag_bayes_stochastic_v2(
+    result = symdag_stochastic(
         data,
         n_iter=N_ITER,
         random_state=seed,

@@ -7,14 +7,14 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-from .config import DEFAULT_BAYES_OPERATORS, BayesConfig
-from .dependencies import load_bayes_core
+from .config import DEFAULT_OPERATORS, SymDAGConfig
+from .dependencies import load_core
 from .results import SymDAGResult
 
 
 @contextmanager
-def _configured_core(core, config: BayesConfig):
-    operators = list(config.operators) if config.operators is not None else list(DEFAULT_BAYES_OPERATORS)
+def _configured_core(core, config: SymDAGConfig):
+    operators = list(config.operators) if config.operators is not None else list(DEFAULT_OPERATORS)
     attrs = {
         "COMP": int(config.max_complexity),
         "PARTS": int(config.num_particles),
@@ -43,16 +43,16 @@ def _format_ordering(ordering: Optional[Iterable[Any]]):
     return out
 
 
-def run_bayes(data, config: Optional[BayesConfig] = None, **overrides) -> SymDAGResult:
-    config = BayesConfig() if config is None else config
+def run_symdag(data, config: Optional[SymDAGConfig] = None, **overrides) -> SymDAGResult:
+    config = SymDAGConfig() if config is None else config
     if overrides:
         config = replace(config, **overrides)
 
-    core = load_bayes_core()
+    core = load_core()
     checkpoint_dir = Path(config.checkpoint_dir) if config.checkpoint_dir else None
 
     with _configured_core(core, config):
-        raw = core.symdag_bayes_stochastic_v2(
+        raw = core.symdag_stochastic(
             data,
             n_iter=config.n_iter,
             random_state=config.random_state,
@@ -75,7 +75,7 @@ def run_bayes(data, config: Optional[BayesConfig] = None, **overrides) -> SymDAG
         )
 
     return SymDAGResult(
-        method="bayes",
+        method="symdag",
         graph=raw["graph"],
         expressions=dict(raw.get("expressions", {})),
         ordering=_format_ordering(raw.get("ordering")),

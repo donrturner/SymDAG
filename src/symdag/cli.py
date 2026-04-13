@@ -7,15 +7,14 @@ from dataclasses import asdict
 import pandas as pd
 
 from .api import run_symdag
-from .config import BayesConfig, DataGenerationConfig, GreedyConfig
+from .config import DataGenerationConfig, SymDAGConfig
 from .metrics import compute_metrics
 from .simulation import simulate_dataset
 
 
 def build_parser() -> argparse.ArgumentParser:
-    bayes_defaults = BayesConfig()
-    parser = argparse.ArgumentParser(description="Run SymDAG-Greedy or SymDAG-Bayes.")
-    parser.add_argument("--method", choices=("greedy", "bayes"), default="bayes")
+    defaults = SymDAGConfig()
+    parser = argparse.ArgumentParser(description="Run SymDAG on a CSV file or simulated dataset.")
     parser.add_argument("--input-csv", help="Optional CSV file. If omitted, simulated data is generated.")
     parser.add_argument("--gen-method", default="gp", choices=("gp", "gpi", "spl", "eq"))
     parser.add_argument("--n", type=int, default=250)
@@ -45,12 +44,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-bn-warm-start", action="store_true")
     parser.add_argument("--model-selection", default="max_nml")
     parser.add_argument("--score-method", default="best")
-
-    parser.add_argument("--max-complexity", type=int)
-    parser.add_argument("--max-fit-calls", type=int, default=10000)
-    parser.add_argument("--sample-size", type=int, default=1)
-    parser.add_argument("--verbose-greedy", action="store_true")
-    parser.set_defaults(use_efdr_threshold=bayes_defaults.use_efdr_threshold)
+    parser.add_argument("--max-complexity", type=int, default=defaults.max_complexity)
+    parser.set_defaults(use_efdr_threshold=defaults.use_efdr_threshold)
     return parser
 
 
@@ -72,47 +67,36 @@ def _load_data(args):
 
 
 def main() -> None:
-    bayes_defaults = BayesConfig()
-    greedy_defaults = GreedyConfig()
     parser = build_parser()
     args = parser.parse_args()
     data, simulation = _load_data(args)
 
-    if args.method == "bayes":
-        config = BayesConfig(
-            n_iter=args.n_iter,
-            burnin=args.burnin,
-            random_state=args.seed,
-            checkpoint_dir=args.checkpoint_dir,
-            max_equation_evals=args.max_equation_evals,
-            final_max_equation_evals=args.final_max_equation_evals,
-            score_method=args.score_method,
-            model_selection=args.model_selection,
-            samples_per_fit=args.samples_per_fit,
-            n_chains=args.n_chains,
-            chain_n_jobs=args.chain_n_jobs,
-            edge_threshold=args.edge_threshold,
-            use_efdr_threshold=args.use_efdr_threshold,
-            efdr_q=args.efdr_q,
-            use_data_driven_threshold=args.use_data_driven_threshold,
-            target_n_edges=args.target_n_edges,
-            edgeprob=args.edgeprob,
-            use_bn_warm_start=not args.no_bn_warm_start,
-            operators=args.operators or None,
-            max_complexity=bayes_defaults.max_complexity if args.max_complexity is None else args.max_complexity,
-            num_particles=args.num_particles,
-            num_mcmc_samples=args.num_mcmc_samples,
-        )
-    else:
-        config = GreedyConfig(
-            sample_size=args.sample_size,
-            max_complexity=greedy_defaults.max_complexity if args.max_complexity is None else args.max_complexity,
-            verbose=args.verbose_greedy,
-            max_fit_calls=args.max_fit_calls,
-            operators=args.operators,
-        )
+    config = SymDAGConfig(
+        n_iter=args.n_iter,
+        burnin=args.burnin,
+        random_state=args.seed,
+        checkpoint_dir=args.checkpoint_dir,
+        max_equation_evals=args.max_equation_evals,
+        final_max_equation_evals=args.final_max_equation_evals,
+        score_method=args.score_method,
+        model_selection=args.model_selection,
+        samples_per_fit=args.samples_per_fit,
+        n_chains=args.n_chains,
+        chain_n_jobs=args.chain_n_jobs,
+        edge_threshold=args.edge_threshold,
+        use_efdr_threshold=args.use_efdr_threshold,
+        efdr_q=args.efdr_q,
+        use_data_driven_threshold=args.use_data_driven_threshold,
+        target_n_edges=args.target_n_edges,
+        edgeprob=args.edgeprob,
+        use_bn_warm_start=not args.no_bn_warm_start,
+        operators=args.operators or None,
+        max_complexity=args.max_complexity,
+        num_particles=args.num_particles,
+        num_mcmc_samples=args.num_mcmc_samples,
+    )
 
-    result = run_symdag(data, method=args.method, config=config)
+    result = run_symdag(data, config=config)
     payload = {
         "result": result.summary(),
         "config": asdict(config),

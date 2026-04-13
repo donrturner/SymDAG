@@ -1,4 +1,4 @@
-from symdag import BayesConfig, DataGenerationConfig, compute_metrics, run_symdag, simulate_dataset
+from symdag import DataGenerationConfig, SymDAGConfig, compute_metrics, run_symdag, simulate_dataset
 
 
 simulation = simulate_dataset(
@@ -14,8 +14,7 @@ simulation = simulate_dataset(
 
 result = run_symdag(
     simulation.data,
-    method="bayes",
-    config=BayesConfig(
+    config=SymDAGConfig(
         n_iter=1000,
         burnin=500,
         samples_per_fit=5,
