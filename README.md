@@ -2,8 +2,6 @@
 
 SymDAG is a Python package for interpretable nonlinear causal discovery with symbolic regression.
 
-This repository now presents SymDAG as a single methodology built from the stochastic-ordering, posterior-aggregation approach in the current project code and the manuscript at `D:\symdag_convert\symdag_plos_submission\symdag_plos.tex`, prepared for PLOS submission. The goal is to estimate nonlinear causal structure while still returning readable mechanism equations.
-
 In the current implementation, SymDAG:
 
 - assumes nonlinear additive-noise structural equations
