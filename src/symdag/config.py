@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 
-DEFAULT_BAYES_OPERATORS = ("+", "-", "*", "cos")
+DEFAULT_OPERATORS = ("+", "-", "*", "cos")
 
 
 @dataclass
@@ -26,7 +26,7 @@ class DataGenerationConfig:
 
 
 @dataclass
-class BayesConfig:
+class SymDAGConfig:
     n_iter: int = 3000
     burnin: int = 2000
     random_state: Optional[int] = 42
@@ -45,17 +45,7 @@ class BayesConfig:
     target_n_edges: Optional[int] = None
     edgeprob: Optional[float] = None
     use_bn_warm_start: bool = True
-    operators: Optional[Sequence[str]] = field(default_factory=lambda: list(DEFAULT_BAYES_OPERATORS))
+    operators: Optional[Sequence[str]] = field(default_factory=lambda: list(DEFAULT_OPERATORS))
     max_complexity: int = 25
     num_particles: int = 100
     num_mcmc_samples: int = 5
-
-
-@dataclass
-class GreedyConfig:
-    sample_size: int = 1
-    max_complexity: int = 35
-    verbose: bool = False
-    max_fit_calls: int = 10000
-    operators: Optional[Sequence[str]] = None
-    regressor_kwargs: Dict[str, Any] = field(default_factory=dict)

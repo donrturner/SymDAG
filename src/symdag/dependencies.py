@@ -11,21 +11,11 @@ def _package_prefix() -> str:
     return __name__.rsplit(".", 1)[0]
 
 
-def load_bayes_core():
+def load_core():
     try:
-        return import_module(f"{_package_prefix()}._bayes_core")
+        return import_module(f"{_package_prefix()}._core")
     except ModuleNotFoundError as exc:
         raise MissingDependencyError(
-            "SymDAG-Bayes requires the Bayesian symbolic-regression stack to be installed. "
-            "Install the package with the `bayes` or `full` extras."
-        ) from exc
-
-
-def load_greedy_core():
-    try:
-        return import_module(f"{_package_prefix()}._greedy_core")
-    except ModuleNotFoundError as exc:
-        raise MissingDependencyError(
-            "SymDAG-Greedy requires `rils-rols` and the greedy backend dependencies. "
-            "Install the package with the `greedy` or `full` extras."
+            "SymDAG requires the symbolic-regression backend to be installed. "
+            "Install the package with `pip install -e .` or add `.[full]` for optional helpers."
         ) from exc

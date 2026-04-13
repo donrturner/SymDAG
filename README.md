@@ -1,28 +1,24 @@
 # SymDAG
 
-SymDAG is a Python package for interpretable nonlinear causal discovery via symbolic regression.
+SymDAG is a Python package for interpretable nonlinear causal discovery with symbolic regression.
 
-The package currently exposes two related methods:
+This repository now presents SymDAG as a single methodology built from the stochastic-ordering, posterior-aggregation approach in the current project code and the manuscript at `D:\symdag_convert\symdag_plos_submission\symdag_plos.tex`, prepared for PLOS submission. The goal is to estimate nonlinear causal structure while still returning readable mechanism equations.
 
-- `greedy` for SymDAG-Greedy
-- `bayes` for SymDAG-Bayes
+In the current implementation, SymDAG:
 
-Both methods aim to estimate a directed acyclic graph together with readable symbolic mechanism estimates. SymDAG-Greedy embeds symbolic regression inside a score-based DAG search, while SymDAG-Bayes uses stochastic ordering updates and posterior-weighted local symbolic models to produce posterior edge-support summaries in addition to representative equations.
+- assumes nonlinear additive-noise structural equations
+- searches graph space through stochastic updates to a latent topological ordering
+- fits local symbolic models with PySIPS and aggregates posterior edge support across retained samples
+- returns a thresholded DAG, posterior edge summaries, and representative symbolic equations
 
 ## What The Package Includes
 
-- a unified Python API for `greedy` and `bayes`
+- one public fitting API, `run_symdag`
+- one public configuration object, `SymDAGConfig`
 - a command-line interface exposed as `symdag`
-- simulated-data generation utilities using the current SymDAG-Bayes data generators
-- examples for both methods on simulated data
-- configurable symbolic-regression settings, including Bayesian hyperparameters such as burn-in, eFDR thresholding, particle settings, and symbolic operators
-
-The simulated-data generators currently support:
-
-- `gp` for Gaussian-process mechanisms
-- `gpi` for Gaussian-process mechanisms with interaction structure
-- `spl` for spline mechanisms
-- `eq` for symbolic-function mechanisms
+- simulated-data utilities derived from the current project implementation
+- an example script on simulated data
+- user-tunable hyperparameters for burn-in, retained samples, eFDR thresholding, particle settings, equation-evaluation budgets, warm starts, and symbolic operators
 
 ## Repository Layout
 
@@ -37,33 +33,30 @@ src/symdag/
 
 Create and activate a Python 3.10+ environment first, then install the package from the repository root.
 
-Install both backends:
+Install SymDAG:
+
+```bash
+pip install -e .
+```
+
+Install optional helpers for warm starts and SID metrics:
 
 ```bash
 pip install -e .[full]
 ```
 
-Install only the Bayesian backend:
+Available extras are:
 
-```bash
-pip install -e .[bayes]
-```
+- `warmstart` for `pybnesian`, which lets SymDAG initialize from a BN hill-climbing fit when available
+- `metrics` for `gadjid`, which enables SID reporting in `compute_metrics`
+- `full` for both optional helpers
 
-Install only the greedy backend:
-
-```bash
-pip install -e .[greedy]
-```
-
-Core dependencies are declared in `pyproject.toml`. The optional backend extras pull in the symbolic-regression libraries used by the current implementation:
-
-- SymDAG-Greedy uses `rils-rols`
-- SymDAG-Bayes uses `pysips`
+The base install already includes the PySIPS symbolic-regression backend used by SymDAG. If `pybnesian` is not installed, the method falls back to a random initial ordering when warm starts are enabled.
 
 ## Quick Start
 
 ```python
-from symdag import BayesConfig, DataGenerationConfig, GreedyConfig
+from symdag import DataGenerationConfig, SymDAGConfig
 from symdag import compute_metrics, run_symdag, simulate_dataset
 
 simulation = simulate_dataset(
@@ -77,10 +70,9 @@ simulation = simulate_dataset(
     )
 )
 
-bayes_result = run_symdag(
+result = run_symdag(
     simulation.data,
-    method="bayes",
-    config=BayesConfig(
+    config=SymDAGConfig(
         n_iter=1000,
         burnin=500,
         samples_per_fit=5,
@@ -92,48 +84,32 @@ bayes_result = run_symdag(
     ),
 )
 
-greedy_result = run_symdag(
-    simulation.data,
-    method="greedy",
-    config=GreedyConfig(
-        max_complexity=35,
-        max_fit_calls=10000,
-    ),
-)
-
-print(compute_metrics(bayes_result.graph, simulation.true_graph, simulation.config.d))
-print(greedy_result.summary())
+print(result.summary())
+print(compute_metrics(result.graph, simulation.true_graph, simulation.config.d))
 ```
 
 ## Command Line Usage
 
-Run SymDAG-Bayes on simulated data:
+Run SymDAG on simulated data:
 
 ```bash
-symdag --method bayes --n 150 --d 10 --sigma 0.1 --gen-method gp --n-iter 1000 --burnin 500 --use-efdr-threshold --efdr-q 0.05 --operators + - * cos
-```
-
-Run SymDAG-Greedy on simulated data:
-
-```bash
-symdag --method greedy --n 100 --d 8 --sigma 0.1 --gen-method gp --max-complexity 35 --max-fit-calls 10000
+symdag --n 150 --d 10 --sigma 0.1 --gen-method gp --n-iter 1000 --burnin 500 --use-efdr-threshold --efdr-q 0.05 --operators "+" "-" "*" "cos"
 ```
 
 Run on a CSV instead of simulated data:
 
 ```bash
-symdag --method bayes --input-csv my_data.csv --n-iter 1000 --burnin 500
+symdag --input-csv my_data.csv --n-iter 1000 --burnin 500 --num-particles 100 --num-mcmc-samples 5
 ```
 
 ## Configuration
 
-The public API exposes dataclass-based configuration objects:
+The public API exposes two main dataclass-based configuration objects:
 
 - `DataGenerationConfig`
-- `GreedyConfig`
-- `BayesConfig`
+- `SymDAGConfig`
 
-Important Bayesian settings include:
+Important `SymDAGConfig` settings include:
 
 - `n_iter`
 - `burnin`
@@ -146,26 +122,37 @@ Important Bayesian settings include:
 - `max_equation_evals`
 - `final_max_equation_evals`
 - `operators`
-
-Important greedy settings include:
-
-- `sample_size`
 - `max_complexity`
-- `max_fit_calls`
-- `operators`
+- `use_bn_warm_start`
+- `random_state`
+
+The defaults follow the current project implementation closely, including the smaller symbolic grammar described in the manuscript.
 
 ## Symbolic Regression Operators
 
-- SymDAG-Bayes defaults to the current project operator set: `["+", "-", "*", "cos"]`
-- SymDAG-Greedy defaults to the backend RILS-ROLS operator grammar used by the current implementation
-- Both backends expose an `operators` setting
-- For greedy, operator overrides are passed through only if the installed `rils-rols` build exposes an operator keyword
+SymDAG defaults to the operator set:
 
-## Examples
+```python
+["+", "-", "*", "cos"]
+```
 
-- `examples/simulated_bayes.py`
-- `examples/simulated_greedy.py`
+That matches the default symbolic-regression grammar used in the current implementation. Users can supply their own operators through `SymDAGConfig(operators=...)` or with `symdag --operators ...`.
+
+## Simulated Data
+
+The packaged data generator is adapted directly from the current project implementation and supports:
+
+- `gp` for Gaussian-process mechanisms
+- `gpi` for Gaussian-process mechanisms with interaction structure
+- `spl` for spline mechanisms
+- `eq` for symbolic-function mechanisms
+
+Use `simulate_dataset(DataGenerationConfig(...))` to generate a standardized dataset together with the true DAG, ordering, and edge list.
+
+## Example
+
+- `examples/simulated_symdag.py`
 
 ## Current Status
 
-This package is a packaging-oriented integration of the current project code. It keeps the active SymDAG-Greedy and SymDAG-Bayes implementations together under one installable interface and uses the current Bayesian simulation/data-generation workflow for examples and smoke tests.
+This package is a packaging-oriented integration of the current SymDAG methodology. It exposes the stochastic symbolic-regression workflow under one installable interface and keeps the simulated-data utilities and hyperparameter controls aligned with the active implementation.
