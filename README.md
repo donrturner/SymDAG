@@ -34,7 +34,7 @@ Create and activate a Python 3.10+ environment first, then install the package f
 Install SymDAG:
 
 ```bash
-pip install -e .
+pip install git+"https://github.com/donrturner/SymDAG/"
 ```
 
 Install optional helpers for warm starts and SID metrics:
@@ -42,14 +42,6 @@ Install optional helpers for warm starts and SID metrics:
 ```bash
 pip install -e .[full]
 ```
-
-Available extras are:
-
-- `warmstart` for `pybnesian`, which lets SymDAG initialize from a BN hill-climbing fit when available
-- `metrics` for `gadjid`, which enables SID reporting in `compute_metrics`
-- `full` for both optional helpers
-
-The base install already includes the PySIPS symbolic-regression backend used by SymDAG. If `pybnesian` is not installed, the method falls back to a random initial ordering when warm starts are enabled.
 
 ## Quick Start
 
